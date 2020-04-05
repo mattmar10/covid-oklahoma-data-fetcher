@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A function that downloads covid data from ny times in csv and filters
+  the data to oklahoma only.
+Parameters:
+  BucketName:
+    Description: The S3Bucket to put results
+    Type: String
+Resources:
+  CovidDataLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://mattmartin-covid-data/bb4112d5409c02474f9282ac0a351c0e
+      Handler: com.mattmar10.covidtracker.data.CovidDataFetcher::handleRequest
+      Runtime: java11
+      Timeout: 120
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Ref: BucketName
+      MemorySize: 256
+      Environment:
+        Variables:
+          BUCKET_NAME:
+            Ref: BucketName
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0/30 9-18 * * ? *)
+            Name: EveryHour
+            Description: Run every hour
+            Enabled: true
